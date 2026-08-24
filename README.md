@@ -1,5 +1,7 @@
 # Crystal Translator
 
+> **v0.1.6** — Stable FR↔EN model download: no GCS registry dependency during normal startup.
+
 Automatic **French ↔ English** Discord translation relay powered locally by **Bergamot**.
 
 ## What this version does
@@ -71,6 +73,12 @@ Put the two Discord channel IDs in `config.json`:
 
 Do not commit `.env` or `data/webhooks.json`; both contain credentials.
 
+## Discord references
+
+Mentions and channel references are never sent to Bergamot. Crystal Translator preserves native Discord references such as `<@user>`, `<@&role>`, `<#channel>`, `@everyone`, `@here`, as well as literal names such as `@Seije`, `#general-fr` and emoji-prefixed channel names like `#✒️-questions-and-issues`.
+
+Channel names and Discord channel references are kept out of Bergamot entirely.
+
 ## Protected terms
 
 Edit `terms.json` without touching the source code.
@@ -129,10 +137,9 @@ The queue is intentionally in memory only: after a process restart Discord resum
 
 ## Bergamot models
 
-This project reads Mozilla's current public model registry and selects the `Release` + `base-memory` models for:
+Crystal Translator is intentionally limited to FR↔EN, so the exact `Release` + `base-memory` metadata for `fr-en` and `en-fr` is bundled with the bot. Normal startup does **not** contact Mozilla's GCS registry.
 
-- `fr-en`
-- `en-fr`
+The model files are downloaded first from the `mukowaty/firefox-translations` Hugging Face mirror of Firefox Translation models, then GitHub/GCS are only fallback sources. The uncompressed model SHA-256 is checked before Bergamot uses it.
 
 The compressed downloads are unpacked and cached under `data/models/`. On later restarts they are read locally.
 
@@ -157,3 +164,35 @@ sudo systemctl status crystal-translator
 Incoming translated webhook messages are ignored by the bot, preventing FR → EN → FR loops.
 
 The bot disables `allowed_mentions` on relayed messages. Mentions remain visually recognizable, but users/roles are not pinged a second time by the translation.
+
+### v0.1.2 — HTTP 403 model download fallback
+
+If Mozilla's production Google Cloud Storage registry or model bucket returns HTTP 403 from a VPS/network, Crystal Translator now falls back automatically:
+
+1. The current FR→EN and EN→FR `base-memory` Release metadata is bundled in the application.
+2. Model downloads try several official Google Cloud Storage download endpoints.
+3. If GCS is still blocked, the exact matching model files are downloaded from Mozilla's archived `firefox-translations-models` GitHub/LFS repository.
+4. Once downloaded, all files are kept in `data/models/`, so normal bot restarts require no network access for the models.
+
+The SHA-256 of the uncompressed model is still checked before Bergamot uses it.
+
+## Node.js 20/22 compatibility (v0.1.4)
+
+`@browsermt/bergamot-translator@0.4.9` is published as an ES module, but its Node worker still contains CommonJS `require()` calls. Crystal Translator works around this upstream packaging issue without editing `node_modules`: before starting Bergamot, it copies the package's official worker runtime to `data/bergamot-worker-runtime/` and executes the worker entry point as `translator-worker.cjs`.
+
+This runtime folder is generated automatically. It can be deleted safely while Crystal Translator is stopped; it will be recreated on the next translation or `npm run warmup`.
+
+
+## v0.1.6 — FR/EN model source fix
+
+The normal FR↔EN path no longer fetches Mozilla's Google Cloud model registry. Crystal Translator uses its bundled FR/EN Release metadata and downloads the three files for each direction from the Firefox-model Hugging Face mirror first:
+
+- `model.*.intgemm.alphas.bin.gz`
+- `vocab.*.spm.gz`
+- `lex.50.50.*.s2t.bin.gz`
+
+This avoids the HTTP 401/403 responses seen from the Mozilla GCS bucket on some VPS networks. Set `model.refreshMozillaRegistry` to `true` only if you explicitly want to refresh metadata from Mozilla; it is `false` by default.
+
+## Mention protection
+
+Discord `@` mentions are **hard-protected** and never sent to Bergamot at all. Native user/role mentions (`<@id>`, `<@&role>`), `@everyone`, `@here`, and literal handles such as `@name` are split out before translation and reinserted unchanged afterwards. Channel mentions (`<#channel>`) remain protected by the technical-token protector. Webhook relays use `allowedMentions: { parse: [] }`, so relayed translations do not generate a second ping.

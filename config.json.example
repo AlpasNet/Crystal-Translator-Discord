@@ -14,6 +14,7 @@
     "releaseStatus": "Release",
     "registryUrl": "https://storage.googleapis.com/moz-fx-translations-data--303e-prod-translations-data/db/models.json",
     "cacheDir": "./data/models",
-    "downloadTimeoutMs": 120000
+    "downloadTimeoutMs": 120000,
+    "refreshMozillaRegistry": false
   }
 }

@@ -38,6 +38,7 @@ export async function loadConfig() {
       architecture: config.model?.architecture || 'base-memory',
       releaseStatus: config.model?.releaseStatus || 'Release',
       registryUrl: config.model?.registryUrl,
+      refreshMozillaRegistry: Boolean(config.model?.refreshMozillaRegistry),
       cacheDir: path.resolve(rootDir, config.model?.cacheDir || './data/models'),
       downloadTimeoutMs: Number(config.model?.downloadTimeoutMs || 120_000)
     }

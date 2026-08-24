@@ -1,6 +1,9 @@
 const TOKEN_PREFIX = 'ZXQCRYSTAL';
 const TOKEN_SUFFIX = 'QXZ';
 
+
+const HARD_DISCORD_REFERENCE_PATTERN = /(<@&\d+>|<@!?\d+>|<#\d+>|@(everyone|here)\b|(?<![\p{L}\p{N}._%+-])@[A-Za-z0-9_](?:[A-Za-z0-9_.-]*[A-Za-z0-9_])?|(?<![\p{L}\p{N}_])#[\p{L}\p{N}\p{M}\p{S}_-]+)/giu;
+
 function escapeRegex(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -18,6 +21,38 @@ export class TermProtector {
     this.dictionary = termsConfig?.dictionary || {};
   }
 
+  splitDiscordReferences(text) {
+    const input = String(text ?? '');
+    const segments = [];
+    let lastIndex = 0;
+
+    HARD_DISCORD_REFERENCE_PATTERN.lastIndex = 0;
+    for (const match of input.matchAll(HARD_DISCORD_REFERENCE_PATTERN)) {
+      const index = match.index ?? 0;
+      if (index > lastIndex) {
+        segments.push({ type: 'text', value: input.slice(lastIndex, index) });
+      }
+      segments.push({ type: 'discord-reference', value: match[0] });
+      lastIndex = index + match[0].length;
+    }
+
+    if (lastIndex < input.length) {
+      segments.push({ type: 'text', value: input.slice(lastIndex) });
+    }
+
+    if (!segments.length) segments.push({ type: 'text', value: input });
+    return segments;
+  }
+
+  // Backward-compatible alias used by older callers/tests.
+  splitMentions(text) {
+    return this.splitDiscordReferences(text).map((segment) =>
+      segment.type === 'discord-reference'
+        ? { ...segment, type: 'mention' }
+        : segment
+    );
+  }
+
   protect(text, from, to) {
     let output = String(text ?? '');
     const replacements = [];
@@ -33,8 +68,6 @@ export class TermProtector {
       /```[\s\S]*?```/g,
       /`[^`\n]+`/g,
       /<a?:[A-Za-z0-9_~]+:\d+>/g,
-      /<@!?\d+>/g,
-      /<@&\d+>/g,
       /<#\d+>/g,
       /<t:\d+(?::[tTdDfFR])?>/g,
       /https?:\/\/[^\s<>]+/gi
