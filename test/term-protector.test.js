@@ -90,3 +90,37 @@ test('channel names never enter the translation segments', () => {
   assert.ok(!translatable.includes('<#987654321098765432>'));
   assert.equal(segments.map((segment) => segment.value).join(''), input);
 });
+
+test('Discord custom emotes are hard-split and never enter translation segments', () => {
+  const input = 'Salut <:mogdance:123456789012345678> puis <a:party_parrot:987654321098765432> ce soir.';
+  const segments = protector.splitDiscordReferences(input);
+  const refs = segments
+    .filter((segment) => segment.type === 'discord-reference')
+    .map((segment) => segment.value);
+  assert.deepEqual(refs, [
+    '<:mogdance:123456789012345678>',
+    '<a:party_parrot:987654321098765432>'
+  ]);
+
+  const translatable = segments
+    .filter((segment) => segment.type === 'text')
+    .map((segment) => segment.value)
+    .join('');
+  assert.ok(!translatable.includes('mogdance'));
+  assert.ok(!translatable.includes('party_parrot'));
+  assert.equal(segments.map((segment) => segment.value).join(''), input);
+});
+
+test('Unicode emojis are hard-split and reconstructed unchanged', () => {
+  const input = 'Salut 😂 ❤️ 👍🏽 👨‍👩‍👧‍👦 🇫🇷 on raid ce soir ?';
+  const segments = protector.splitDiscordReferences(input);
+  assert.equal(segments.map((segment) => segment.value).join(''), input);
+
+  const translatable = segments
+    .filter((segment) => segment.type === 'text')
+    .map((segment) => segment.value)
+    .join('');
+  for (const emoji of ['😂', '❤️', '👍🏽', '👨‍👩‍👧‍👦', '🇫🇷']) {
+    assert.ok(!translatable.includes(emoji), `emoji should not enter Bergamot: ${emoji}`);
+  }
+});

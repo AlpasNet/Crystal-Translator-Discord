@@ -75,9 +75,9 @@ Do not commit `.env` or `data/webhooks.json`; both contain credentials.
 
 ## Discord references
 
-Mentions and channel references are never sent to Bergamot. Crystal Translator preserves native Discord references such as `<@user>`, `<@&role>`, `<#channel>`, `@everyone`, `@here`, as well as literal names such as `@Seije`, `#general-fr` and emoji-prefixed channel names like `#✒️-questions-and-issues`.
+Mentions, channel references and emotes are never sent to Bergamot. Crystal Translator preserves native Discord references such as `<@user>`, `<@&role>`, `<#channel>`, `@everyone`, `@here`, literal names such as `@Seije`, `#general-fr`, emoji-prefixed channel names like `#✒️-questions-and-issues`, custom Discord emotes such as `<:mogdance:123456789012345678>` / `<a:mogdance:123456789012345678>`, and normal Unicode emojis.
 
-Channel names and Discord channel references are kept out of Bergamot entirely.
+Channel names, Discord references and emotes are kept out of Bergamot entirely.
 
 ## Protected terms
 
@@ -195,4 +195,4 @@ This avoids the HTTP 401/403 responses seen from the Mozilla GCS bucket on some 
 
 ## Mention protection
 
-Discord `@` mentions are **hard-protected** and never sent to Bergamot at all. Native user/role mentions (`<@id>`, `<@&role>`), `@everyone`, `@here`, and literal handles such as `@name` are split out before translation and reinserted unchanged afterwards. Channel mentions (`<#channel>`) remain protected by the technical-token protector. Webhook relays use `allowedMentions: { parse: [] }`, so relayed translations do not generate a second ping.
+Discord `@` mentions, channel references and emotes are **hard-protected** and never sent to Bergamot at all. Native user/role mentions (`<@id>`, `<@&role>`), `@everyone`, `@here`, literal handles such as `@name`, channel mentions/names (`<#channel>`, `#general-fr`), custom emotes (`<:name:id>`, `<a:name:id>`) and Unicode emojis are split out before translation and reinserted unchanged afterwards. Webhook relays use `allowedMentions: { parse: [] }`, so relayed translations do not generate a second ping.

@@ -41,9 +41,9 @@ export class BergamotService {
   async translate(text, from, to) {
     if (!text?.trim()) return '';
 
-    // Discord references are hard-protected: mentions and channel names never
-    // enter Bergamot at all. This avoids any chance that the model translates
-    // or corrupts @mentions, <#channel-id> references or literal #channel-name.
+    // Discord references and emotes are hard-protected: mentions, channel names,
+    // custom Discord emotes and Unicode emoji sequences never enter Bergamot at all.
+    // This prevents the model from translating or corrupting any of them.
     const segments = this.protector.splitDiscordReferences(text);
     const output = [];
 
