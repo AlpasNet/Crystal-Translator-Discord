@@ -3,6 +3,7 @@ import {
   AttachmentBuilder,
   Client,
   GatewayIntentBits,
+  MessageFlags,
   Partials,
   PermissionFlagsBits
 } from 'discord.js';
@@ -76,14 +77,19 @@ async function getTargetChannel(channelId) {
 }
 
 async function sendViaWebhook(targetChannel, payload) {
+  const silentPayload = {
+    ...payload,
+    flags: MessageFlags.SuppressNotifications
+  };
+
   let webhook = await webhooks.get(targetChannel);
   try {
-    return await webhook.send(payload);
+    return await webhook.send(silentPayload);
   } catch (error) {
     if (![10015, 50027].includes(error.code)) throw error;
     await webhooks.reset(targetChannel.id);
     webhook = await webhooks.get(targetChannel);
-    return webhook.send(payload);
+    return webhook.send(silentPayload);
   }
 }
 

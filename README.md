@@ -9,6 +9,7 @@ Automatic **French ↔ English** Discord translation relay powered locally by **
 - `#fr` → automatic English translation in `#en`.
 - `#en` → automatic French translation in `#fr`.
 - Translated messages use a Discord webhook with the original member's server display name and avatar.
+- All translated webhook messages are sent as **silent Discord messages** (`SuppressNotifications`), so relays never generate channel notifications.
 - Small `FR → EN` / `EN → FR` marker.
 - FFXIV/community protected terms and a directional dictionary in `terms.json`.
 - Discord mentions, custom emojis, timestamps, URLs and code are protected from translation.
